@@ -1,0 +1,38 @@
+name: Preprocessing Iris Dataset
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  preprocessing:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          pip install pandas numpy scikit-learn
+
+      - name: Run preprocessing
+        run: |
+          python preprocessing/automate_Mona.py
+
+      - name: Commit hasil preprocessing
+        run: |
+          git config --global user.name  "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add preprocessing/iris_preprocessing/
+          git add iris_raw/
+          git diff --staged --quiet || git commit -m "Auto: update preprocessed dataset [skip ci]"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
