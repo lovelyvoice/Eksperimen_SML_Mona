@@ -1,75 +1,39 @@
 import pandas as pd
-import numpy as np
-from sklearn.preprocessing import StandardScaler
-from sklearn.model_selection import train_test_split
 import os
 
-def load_data():
-    """Load dataset Banknote Authentication dan konversi ke DataFrame."""
-    url = "https://archive.ics.uci.edu/ml/machine-learning-databases/00267/data_banknote_authentication.txt"
-    column_names = ['variance', 'skewness', 'curtosis', 'entropy', 'class']
-    df = pd.read_csv(url, names=column_names)
-    
-    os.makedirs('banknote_raw', exist_ok=True)
-    df.to_csv('banknote_raw/banknote_raw.csv', index=False)
-    print(f"[1/4] Data loaded: {df.shape[0]} baris, {df.shape[1]} kolom")
-    return df
+def load_data(filepath):
+    print(f"Loading data from {filepath}...")
+    return pd.read_csv(filepath)
 
 def clean_data(df):
-    """Hapus duplikat dan tangani missing values."""
-    before = len(df)
-    df = df.drop_duplicates()
-    after = len(df)
-    print(f"[2/4] Cleaning: {before - after} duplikat dihapus")
+    print("Cleaning data...")
+    # Menghapus duplikasi
+    df_cleaned = df.drop_duplicates().copy()
+    
+    # Menghapus kolom class_name karena tidak diperlukan untuk modelling
+    if 'class_name' in df_cleaned.columns:
+        df_cleaned = df_cleaned.drop(columns=['class_name'])
+        
+    print(f"Data shape after cleaning: {df_cleaned.shape}")
+    return df_cleaned
 
-    feature_cols = ['variance', 'skewness', 'curtosis', 'entropy']
-    for col in feature_cols:
-        if df[col].isnull().sum() > 0:
-            df[col].fillna(df[col].median(), inplace=True)
-    print(f"       Missing values: {df.isnull().sum().sum()}")
-    return df
-
-def split_data(df):
-    """Split data menjadi train dan test set."""
-    feature_cols = ['variance', 'skewness', 'curtosis', 'entropy']
-    X = df[feature_cols]
-    y = df['class']
-
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.2, random_state=42, stratify=y
-    )
-    print(f"[3/4] Split: train={X_train.shape[0]}, test={X_test.shape[0]}")
-    return X_train, X_test, y_train, y_test
-
-def scale_and_save(X_train, X_test, y_train, y_test):
-    """Standarisasi fitur dan simpan hasil preprocessing."""
-    scaler = StandardScaler()
-    X_train_scaled = scaler.fit_transform(X_train)
-    X_test_scaled  = scaler.transform(X_test)
-
-    feature_cols = ['variance', 'skewness', 'curtosis', 'entropy']
-
-    train_df = pd.DataFrame(X_train_scaled, columns=feature_cols)
-    train_df['class'] = y_train.values
-
-    test_df = pd.DataFrame(X_test_scaled, columns=feature_cols)
-    test_df['class'] = y_test.values
-
-    os.makedirs('preprocessing/banknote_preprocessing', exist_ok=True)
-    train_df.to_csv('preprocessing/banknote_preprocessing/banknote_train.csv', index=False)
-    test_df.to_csv('preprocessing/banknote_preprocessing/banknote_test.csv',   index=False)
-
-    print(f"[4/4] Saved:")
-    print(f"       preprocessing/banknote_preprocessing/banknote_train.csv")
-    print(f"       preprocessing/banknote_preprocessing/banknote_test.csv")
+def save_data(df, output_dir):
+    print(f"Saving preprocessed data to {output_dir}...")
+    os.makedirs(output_dir, exist_ok=True)
+    output_path = os.path.join(output_dir, 'banknote_preprocessed.csv')
+    df.to_csv(output_path, index=False)
+    print(f"Saved successfully: {output_path}")
 
 def main():
-    print("=== Automate Preprocessing Banknote Dataset ===")
-    df = load_data()
-    df = clean_data(df)
-    X_train, X_test, y_train, y_test = split_data(df)
-    scale_and_save(X_train, X_test, y_train, y_test)
-    print("\nPreprocessing selesai!")
+    # Path konfigurasi
+    input_path = 'banknote_raw/banknote_raw.csv'
+    output_dir = 'preprocessing/banknote_preprocessing'
+    
+    # Eksekusi pipeline preprocessing
+    df = load_data(input_path)
+    df_cleaned = clean_data(df)
+    save_data(df_cleaned, output_dir)
+    print("Automate preprocessing selesai!")
 
 if __name__ == "__main__":
     main()
