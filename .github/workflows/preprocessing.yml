@@ -1,12 +1,12 @@
-name: Auto: update preprocessed dataset
+name: Auto update preprocessed dataset
 
 on:
   push:
     branches:
       - main
-    paths:
-      - 'banknote_raw/**'
-      - 'preprocessing/automate_Mona.py'
+
+permissions:
+  contents: write
 
 jobs:
   run-script:
